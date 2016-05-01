@@ -1,3 +1,9 @@
-# Change log for ORCA Importer
+# CHANGELOG for ORCA Importer
 
-*Nothing to report here yet*
+*Unreleased*
+
+ * Significant streamlining and rework of utility functions
+ * Significant additions to scope of utility functions
+ * Template for memoization framework is established
+ * Memoized ENGRAD import is complete.
+
