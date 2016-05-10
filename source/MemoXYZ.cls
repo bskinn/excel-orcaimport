@@ -2,19 +2,19 @@ VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
-Attribute VB_Name = "MemoENGRAD"
+Attribute VB_Name = "MemoXYZ"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 '-------------------------------------------------------------------------------
-' Name:        MemoENGRAD (Class Module)
-' Purpose:     Memoized retrieval of ENGRAD data from disk
+' Name:        MemoXYZ (Class Module)
+' Purpose:     Memoized retrieval of XYZ data from disk
 '
 ' Author:      Brian Skinn
 '                bskinn@alum.mit.edu
 '
-' Created:     30 Apr 2016
+' Created:     10 May 2016
 ' Copyright:   (c) Brian Skinn 2016
 ' License:     The MIT License; see "license.txt" for full license terms
 '                   and contributor agreement.
@@ -49,13 +49,13 @@ Public Function IMemoized_memoItem(ParamArray args() As Variant) As Variant
     '  calculated item.
     '
     ' On VBA RTEs, a StrObj is returned with the error information.
-    ' Otherwise, an ORCA_ENGRAD is returned. If problems occurred during
+    ' Otherwise, an ORCA_XYZ is returned. If problems occurred during
     '  parsing, that information is output when data is requested from
     '  the object.
     '
     ' Arguments:
     '
-    '       1) String path to the .engrad file to be parsed
+    '       1) String path to the xyz file to be parsed
     '
     
     Dim workVt() As Variant, hashStr As String, SO As New StrObj
@@ -79,7 +79,7 @@ Public Function IMemoized_memoItem(ParamArray args() As Variant) As Variant
     
     ' If not already in memo dict, retrieve and add
     If Not dict.Exists(hashStr) Then
-        If ThisWorkbook.DEBUG_FLAG Then MsgBox "Loaded ENGRAD from disk"
+        If ThisWorkbook.DEBUG_FLAG Then MsgBox "Loaded XYZ from disk"
         dict.Add hashStr, func(workVt)
     End If
     
@@ -91,15 +91,15 @@ End Function
 Private Function func(argArray() As Variant) As Variant
     ' Performs the (presumably) costly item generation
     '  action for the memoized entity.
-    ' In this case, it's just creating and binding an engrad object
+    ' In this case, it's just creating and binding an XYZ object
     
-    Dim OE As New ORCA_ENGRAD
+    Dim OX As New ORCA_XYZ
     
     ' Perform the import
-    OE.readENGRAD argArray(0), fso
+    OX.readXYZ argArray(0), fso, False
     
     ' Return the resulting object
-    Set func = OE
+    Set func = OX
     
 End Function
 
@@ -142,4 +142,5 @@ Public Sub IMemoized_flushMemo()
     ' Flush the memoization dictionary
     dict.RemoveAll
 End Sub
+
 

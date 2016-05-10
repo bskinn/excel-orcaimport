@@ -48,7 +48,7 @@ Public Enum HESS_DATA_TYPE
 End Enum
 
 Public Enum XYZ_DATA_TYPE
-    xyzSingleGeom = 1
+    XYZSingleGeom = 1
     xyzAtomicNums = 2
     xyzExpandedAtNums = 3
     xyzAtomicSyms = 4
@@ -106,11 +106,11 @@ Public Enum mtxSpec
 End Enum
 
 ' Execution/compilation control constants
-Public Const DEBUG__MODE__ = True
+'Public Const DEBUG__MODE__ = True
 
 ' Code information constants
-Public Const Invalid_Atom_Symbol As Long = -1
-Public Const Unsupported_Atomic_Number As String = "INVALID"
+Public Const Invalid_AtomNum_Arg As Long = -1
+Public Const Invalid_AtomSym_Arg As String = "INVALID"
 Public Const Failed_Import_Str As String = "Import Failed"
 Public Const Max_Atomic_Num As Long = 103
 Public Const Min_Atomic_Num As Long = 1
@@ -349,7 +349,7 @@ Public Function atomNum(ByVal atomSymbol As String) As Long
     Case "LR"
         atomNum = 103
     Case Else
-        atomNum = Invalid_Atom_Symbol
+        atomNum = Invalid_AtomNum_Arg
     End Select
 End Function
 
@@ -562,6 +562,6 @@ Public Function atomSym(ByVal atomNumber As Long) As String
     Case 103
         atomSym = "Lr"
     Case Else
-        atomSym = Unsupported_Atomic_Number
+        atomSym = Invalid_AtomSym_Arg
     End Select
 End Function

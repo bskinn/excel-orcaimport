@@ -134,7 +134,7 @@ Public Function readHESS(ByVal HESS_Path As String, ByRef fso As FileSystemObjec
         ' Loop and store values
         For iter = 1 To mchs.Count
             Set mch = mchs(iter - 1)
-            If atomNum(mch.SubMatches(0)) = Invalid_Atom_Symbol Then
+            If atomNum(mch.SubMatches(0)) = Invalid_AtomNum_Arg Then
                 readHESS = "Invalid atomic symbol """ & mch.SubMatches(0) & """"
                 GoTo Error_Exit
             Else
@@ -489,7 +489,7 @@ End Property
 
 Property Get atomicWeightsMatrix() As Variant
     If Initialized Then
-        atomicWeightsMatrix = mDiag(Me.atomicWeightsVector)
+        atomicWeightsMatrix = vToDiag(Me.atomicWeightsVector)
     Else
         atomicWeightsMatrix = Empty
     End If
@@ -504,7 +504,7 @@ Property Get rootAtWtsMatrix() As Variant
             vt(iter, 1) = Me.atomicWeightsVector(iter, 1) ^ 0.5
         Next iter
         
-        rootAtWtsMatrix = mDiag(vt)
+        rootAtWtsMatrix = vToDiag(vt)
     Else
         rootAtWtsMatrix = Empty
     End If

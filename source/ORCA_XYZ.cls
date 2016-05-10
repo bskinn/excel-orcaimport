@@ -39,31 +39,23 @@ Option Base 1
 ' Object not to be modified after creation; constructor routine to populate all internal
 '  variables from HESS file at indicated path, and input parameters
 '
-' UNITS ARE IN AMU AND BOHRS
+' INTERNAL UNITS ARE IN BOHRS
 '
-' THE DISPLACEMENT MAGNITUDE IS ALWAYS POSITIVE, if DispDir is not dispNone. The
-'  DispDirection Enum is defined such that the signed displacement can be obtained
-'  by: DispDir * DispMag
-
-' Want to pull Hessian, frequencies, normal modes, atoms/masses, geometry from .HESS
-'  If present, also retrieve the eigenvalues/-vectors?  Mainly only useful as a cross-check,
-'  probably?
-
 
 Private NumAtoms As Long, NumGeoms As Long, Comments As Variant
 Private AtomicNums As Variant, AtomCoords As Variant
+Private wsf As WorksheetFunction
+Private ErrorStr As String
 Private Initialized As Boolean
 
 
 
 '  ===  CONSTRUCTOR  ===
-Public Function readXYZ( _
+Public Sub readXYZ( _
             ByVal XYZ_Path As String, _
-            ByRef fso As FileSystemObject _
-            ) As String
-    ' Null string return means file indicated by pathStr exists and conforms to expected pattern,
-    '  and that the data was retrieved successfully.
-    ' Non-null string contains description of error encountered.
+            ByRef fso As FileSystemObject, _
+            Optional ByVal bohrs As Boolean = False _
+            )
     
     Dim rx As New RegExp, ts As TextStream
     Dim str As String, str2 As String
@@ -72,20 +64,9 @@ Public Function readXYZ( _
     Dim val As Long, val2 As Long
     Dim valStr As String
     
-    ' Debug mode
-    If DEBUG__MODE__ Then
-        On Error GoTo 0
-    Else
-        On Error GoTo VBA_Error_Exit
-    End If
-    
-    ' Initialize return value
-    readXYZ = "Constructor exited without specifying return value"
-    
     ' Only proceed if object hasn't already been configured
     If Initialized Then
-        readXYZ = "Object has already been initialized"
-        GoTo Error_Exit
+        Err.Raise Number:=425, Description:="ORCA_ENGRAD object already initialized"
     End If
     
     ' Bind the filesystem
@@ -95,8 +76,8 @@ Public Function readXYZ( _
     If fso.FileExists(XYZ_Path) Then
         Set ts = fso.OpenTextFile(XYZ_Path, ForReading)
     Else
-        readXYZ = "Specified file not found"
-        GoTo Error_Exit
+        ErrorStr = "Specified file not found"
+        Exit Sub
     End If
     
     ' Pull entire file contents
@@ -114,12 +95,12 @@ Public Function readXYZ( _
         '  number of coordinates is provided within a properly formatted block; (2) if not all of the
         '  properly formatted blocks have the same number of atoms; (3) if no properly formatted blocks
         '  are found; (4) if atoms collide in a given geometry; (5)...
-        .Pattern = "([0-9]+)\s*\n(.*)\n((\s+[a-zA-Z]+(\s+[0-9.-]+){3}\s*\n)+)"
+        .Pattern = "([0-9]+)\s*\n(.*)\n((\s+([a-zA-Z]+|[0-9]+)(\s+[0-9.-]+){3}\s*\n)+)"
         
         If Not .Test(str) Then
             ' No geometries found
-            readXYZ = "Atom geometry data not found in indicated file"
-            GoTo Error_Exit
+            ErrorStr = "XYZ data not found in indicated file"
+            Exit Sub
         End If
         
         ' Store the matches
@@ -139,23 +120,23 @@ Public Function readXYZ( _
             For iter = 2 To NumGeoms
                 Comments(iter, 1) = mchs(iter - 1).SubMatches(1)
                 If Not CLng(mchs(iter - 1).SubMatches(0)) = NumAtoms Then
-                    readXYZ = "Mismatch in 'number of atoms' specification at geometry #" & iter
-                    GoTo Error_Exit
+                    ErrorStr = "Mismatch in 'number of atoms' specification at geometry #" & iter
+                    Exit Sub
                 End If
             Next iter
         End If
         
         ' Reprocess the coordinates of each match to retrieve the atom and coordinate information
         '  The pass on the first geometry (defining values) is different than the rest (proofing values)
-        .Pattern = "\s+([a-zA-Z]+)\s+([0-9.-]+)\s+([0-9.-]+)\s+([0-9.-]+)\s*\n"
+        .Pattern = "\s+([a-zA-Z]+|[0-9]+)\s+([0-9.-]+)\s+([0-9.-]+)\s+([0-9.-]+)\s*\n"
         
         ' Loop and retrieve geometries
         For iter = 1 To mchs.Count
             ' Check to ensure coordinate data actually present
             If Not .Test(mchs(iter - 1).SubMatches(2)) Then
                 ' This should never occur, as the pattern is chosen to succeed on any of mchs
-                readXYZ = "Coordinate data not found when parsing geometry block #" & iter
-                GoTo Error_Exit
+                ErrorStr = "Coordinate data not found when parsing geometry block #" & iter
+                Exit Sub
             End If
             
             ' Pull atom symbols and coordinates as Matches
@@ -163,75 +144,77 @@ Public Function readXYZ( _
             
             ' Confirm number of atoms actually found is correct
             If Not NumAtoms = mchs2.Count Then
-                readXYZ = "Incorrect number of atoms found when parsing geometry block #" & iter
-                GoTo Error_Exit
+                ErrorStr = "Incorrect number of atoms found when parsing geometry block #" & iter
+                Exit Sub
             End If
             
             For iter2 = 1 To mchs2.Count  ' Loop over each atom
-                ' For the first geometry, proof and store the atomic number.
+                ' For the first geometry, proof and store the atomic number/symbol.
                 '  For all later geometries, confirm consistency
+                ' Store the submatch string
                 valStr = mchs2.item(iter2 - 1).SubMatches(0)
+                
+                ' If it's a number, convert to an atomic symbol
+                If IsNumeric(valStr) Then valStr = atomSym(valStr)
+                
                 If iter = 1 Then
                     ' Check validity in first block (element is simulable) and store
-                    If atomNum(valStr) = Invalid_Atom_Symbol Then
-                        readXYZ = "Invalid atomic symbol """ & valStr & """"
-                        GoTo Error_Exit
+                    If atomNum(valStr) = Invalid_AtomNum_Arg Then
+                        ErrorStr = "Invalid atom """ & valStr & """ at position " & iter
+                        Exit Sub
                     Else
                         AtomicNums(iter2, 1) = CLng(atomNum(valStr))
                     End If
                 Else
-                    ' Check consistency with value store from first block
+                    ' Check consistency with value stored from first block
                     If Not CLng(atomNum(valStr)) = AtomicNums(iter2, 1) Then
-                        readXYZ = "Atomic symbol mismatch in block " & iter & ", atom " & iter2
-                        GoTo Error_Exit
+                        ErrorStr = "Atomic symbol mismatch in block " & iter & ", atom " & iter2
+                        Exit Sub
                     End If
                 End If
                 
-                ' Loop and store the coordinates, CONVERTING TO BOHRS!
+                ' Loop and store the coordinates, CONVERTING TO BOHRS IF NEEDED!
                 For iter3 = 1 To 3
-                    AtomCoords(3 * (iter2 - 1) + iter3, iter) = CDbl(mchs2(iter2 - 1).SubMatches(iter3)) / Angs_per_Bohr
+                    If bohrs Then
+                        AtomCoords(3 * (iter2 - 1) + iter3, iter) = _
+                                CDbl(mchs2(iter2 - 1).SubMatches(iter3))
+                    Else
+                        AtomCoords(3 * (iter2 - 1) + iter3, iter) = _
+                                CDbl(mchs2(iter2 - 1).SubMatches(iter3)) / Angs_per_Bohr
+                    End If
                 Next iter3
             Next iter2
         Next iter
     End With
     
-    ' Set the success (null string) return value
-    readXYZ = ""
-    
-    ' Set the initialized flag and exit
+    ' Set the initialized flag, and done.
     Initialized = True
-    On Error GoTo 0
-    Exit Function
     
-    
-Error_Exit:
-    readXYZ = "ORCA_XYZ: " & readXYZ
-    On Error GoTo 0
-    Exit Function
-    
-VBA_Error_Exit:
-    readXYZ = "ORCA_XYZ.readXYZ: VBA Error " & Err.Number & ": " & Err.Description
-    Err.Clear
-    On Error GoTo 0
-    Exit Function
-    
-End Function
+End Sub
 
 
 '  ===  PROPERTY GET  ===
-Property Get numOfAtoms() As Long
-    If Initialized Then
-        numOfAtoms = NumAtoms
+Property Get numOfAtoms() As Variant
+    If ErrorStr <> "" Then
+        numOfAtoms = ErrorStr
     Else
-        numOfAtoms = Uninit_Unsigned_Long
+        If Initialized Then
+            numOfAtoms = NumAtoms
+        Else
+            RaiseUninitError
+        End If
     End If
 End Property
 
-Property Get numOfGeoms() As Long
-    If Initialized Then
-        numOfGeoms = NumGeoms
+Property Get numOfGeoms() As Variant
+    If ErrorStr <> "" Then
+        numOfGeoms = ErrorStr
     Else
-        numOfGeoms = Uninit_Unsigned_Long
+        If Initialized Then
+            numOfGeoms = NumGeoms
+        Else
+            RaiseUninitError
+        End If
     End If
 End Property
 
@@ -240,18 +223,26 @@ Property Get isInitialized() As Boolean
 End Property
 
 Property Get commentsArray() As Variant
-    If Initialized Then
-        commentsArray = Comments
+    If ErrorStr <> "" Then
+        commentsArray = ErrorStr
     Else
-        commentsArray = Empty
+        If Initialized Then
+            commentsArray = Comments
+        Else
+            RaiseUninitError
+        End If
     End If
 End Property
 
 Property Get atomicNumsArray() As Variant
-    If Initialized Then
-        atomicNumsArray = AtomicNums
+    If ErrorStr <> "" Then
+        atomicNumsArray = ErrorStr
     Else
-        atomicNumsArray = Empty
+        If Initialized Then
+            atomicNumsArray = AtomicNums
+        Else
+            RaiseUninitError
+        End If
     End If
 End Property
 
@@ -259,126 +250,31 @@ Property Get atomicSymsArray() As Variant
     
     Dim iter As Long, workVnt As Variant
     
-    ' Debug mode
-    If DEBUG__MODE__ Then
-        On Error GoTo 0
+    If ErrorStr <> "" Then
+        atomicSymsArray = ErrorStr
     Else
-        On Error GoTo VBA_Error_Exit
+        If Initialized Then
+            ReDim workVnt(1 To NumAtoms, 1 To 1)
+            For iter = 1 To NumAtoms
+                workVnt(iter, 1) = atomSym(CLng(AtomicNums(iter, 1)))
+            Next iter
+            atomicSymsArray = workVnt
+        Else
+            RaiseUninitError
+        End If
     End If
-    
-    If Initialized Then
-        ReDim workVnt(1 To NumAtoms, 1 To 1)
-        For iter = 1 To NumAtoms
-            workVnt(iter, 1) = atomSym(CLng(AtomicNums(iter, 1)))
-        Next iter
-        atomicSymsArray = workVnt
-    Else
-        atomicSymsArray = Empty
-    End If
-    
-    ' Successful exit
-    Exit Property
-    
-    
-Error_Exit:
-    atomicSymsArray = "ORCA_XYZ.atomicSymsArray: " & atomicSymsArray
-    On Error GoTo 0
-    Exit Property
-    
-VBA_Error_Exit:
-    atomicSymsArray = "ORCA_XYZ.atomicSymsArray: VBA Error " & Err.Number & ": " & Err.Description
-    Err.Clear
-    On Error GoTo 0
-    Exit Property
-    
-End Property
-
-Property Get expandedAtomicNumsArray() As Variant
-    
-    Dim iter As Long, workVnt As Variant
-    
-    ' Debug mode
-    If DEBUG__MODE__ Then
-        On Error GoTo 0
-    Else
-        On Error GoTo VBA_Error_Exit
-    End If
-    
-    If Initialized Then
-        ReDim workVnt(1 To NumAtoms * 3, 1 To 1)
-        For iter = 1 To NumAtoms
-            workVnt(3 * (iter - 1) + 1, 1) = AtomicNums(iter, 1)
-            workVnt(3 * (iter - 1) + 2, 1) = AtomicNums(iter, 1)
-            workVnt(3 * (iter - 1) + 3, 1) = AtomicNums(iter, 1)
-        Next iter
-        expandedAtomicNumsArray = workVnt
-    Else
-        expandedAtomicNumsArray = Empty
-    End If
-    
-    ' Successful exit
-    Exit Property
-    
-    
-Error_Exit:
-    expandedAtomicNumsArray = "ORCA_XYZ.expandedAtomicNumsArray: " & expandedAtomicNumsArray
-    On Error GoTo 0
-    Exit Property
-    
-VBA_Error_Exit:
-    expandedAtomicNumsArray = "ORCA_XYZ.expandedAtomicNumsArray: VBA Error " & Err.Number & ": " & Err.Description
-    Err.Clear
-    On Error GoTo 0
-    Exit Property
-    
-    
-End Property
-
-Property Get expandedAtomicSymsArray() As Variant
-    
-    Dim iter As Long, workVnt As Variant
-    
-    ' Debug mode
-    If DEBUG__MODE__ Then
-        On Error GoTo 0
-    Else
-        On Error GoTo VBA_Error_Exit
-    End If
-    
-    If Initialized Then
-        ReDim workVnt(1 To NumAtoms * 3, 1 To 1)
-        For iter = 1 To NumAtoms
-            workVnt(3 * (iter - 1) + 1, 1) = atomSym(CLng(AtomicNums(iter, 1)))
-            workVnt(3 * (iter - 1) + 2, 1) = atomSym(CLng(AtomicNums(iter, 1)))
-            workVnt(3 * (iter - 1) + 3, 1) = atomSym(CLng(AtomicNums(iter, 1)))
-        Next iter
-        expandedAtomicSymsArray = workVnt
-    Else
-        expandedAtomicSymsArray = Empty
-    End If
-    
-    ' Successful exit
-    Exit Property
-    
-    
-Error_Exit:
-    expandedAtomicSymsArray = "ORCA_XYZ.expandedAtomicSymsArray: " & expandedAtomicSymsArray
-    On Error GoTo 0
-    Exit Property
-    
-VBA_Error_Exit:
-    expandedAtomicSymsArray = "ORCA_XYZ.expandedAtomicSymsArray: VBA Error " & Err.Number & ": " & Err.Description
-    Err.Clear
-    On Error GoTo 0
-    Exit Property
     
 End Property
 
 Property Get atomCoordsArray() As Variant
-    If Initialized Then
-        atomCoordsArray = AtomCoords
+    If ErrorStr <> "" Then
+        atomCoordsArray = ErrorStr
     Else
-        atomCoordsArray = Empty
+        If Initialized Then
+            atomCoordsArray = AtomCoords
+        Else
+            RaiseUninitError
+        End If
     End If
 End Property
 
@@ -388,47 +284,32 @@ Property Get singleGeometry( _
     
     Dim iter As Long, workVnt As Variant
     
-    ' Debug mode
-    If DEBUG__MODE__ Then
-        On Error GoTo 0
+    ' Return string if error occurred during parsing
+    If ErrorStr <> "" Then
+        singleGeometry = ErrorStr
     Else
-        On Error GoTo VBA_Error_Exit
+        If Initialized Then
+            ' Size working array
+            ReDim workVnt(1 To NumAtoms * 3, 1 To 1)
+            
+            ' Iterate and fill working array
+            For iter = 1 To 3 * NumAtoms
+                ' If a valid geomNum, fill the geometry
+                If geomNum >= 1 And geomNum <= NumGeoms Then
+                    workVnt(iter, 1) = CDbl(AtomCoords(iter, geomNum))
+                Else
+                    singleGeometry = "Invalid geometry number"
+                    Exit Property
+                End If
+            Next iter
+            
+            ' Store the return value
+            singleGeometry = workVnt
+            
+        Else
+            RaiseUninitError
+        End If
     End If
-    
-    If Initialized Then
-        ' Size working array
-        ReDim workVnt(1 To NumAtoms * 3, 1 To 1)
-        
-        ' Iterate and fill working array
-        For iter = 1 To 3 * NumAtoms
-            ' If a valid geomNum, fill the geometry
-            If geomNum >= 1 And geomNum <= NumGeoms Then
-                workVnt(iter, 1) = CDbl(AtomCoords(iter, geomNum))
-            Else
-                singleGeometry = "Invalid geometry number"
-                GoTo Error_Exit
-            End If
-        Next iter
-        
-        singleGeometry = workVnt
-        
-    Else
-        singleGeometry = Empty
-    End If
-    
-    On Error GoTo 0
-    Exit Property
-    
-Error_Exit:
-    singleGeometry = "ORCA_XYZ.singleGeometry: " & singleGeometry
-    On Error GoTo 0
-    Exit Property
-    
-VBA_Error_Exit:
-    singleGeometry = "ORCA_XYZ.singleGeometry: VBA Error " & Err.Number & ": " & Err.Description
-    Err.Clear
-    On Error GoTo 0
-    Exit Property
     
 End Property
 
@@ -442,67 +323,111 @@ Property Get atomDistance( _
     
     Dim workVec As Variant, workDbl As Double, iter As Long
     
-    ' If not initialized, dump with Empty
-    If Not Initialized Then
-        atomDistance = Empty
+    ' If a prior error, return it
+    If ErrorStr <> "" Then
+        atomDistance = ErrorStr
         Exit Property
     End If
     
-    ' Debug mode
-    If DEBUG__MODE__ Then
-        On Error GoTo 0
-    Else
-        On Error GoTo VBA_Error_Exit
+    ' If not initialized, dump with error
+    If Not Initialized Then
+        RaiseUninitError
     End If
     
     ' Retrieve the relevant geometry; passing out any error behavior
     workVec = Me.singleGeometry(geomNum)
     If Not IsArray(workVec) Then
         atomDistance = workVec
-        GoTo Error_Exit
+        Exit Property
     End If
     
+    ' Reshape to a more convenient form
+    workVec = mReshape(workVec, Me.numOfAtoms, 3)
+    
     ' Confirm provided atom numbers are valid
-    If atomIdx1 < 1 Or atomIdx2 < 1 Or _
-            atomIdx1 > Me.numOfAtoms Or _
-            atomIdx2 > Me.numOfAtoms Then
-        ' Not within range of atoms present
-        atomDistance = "Invalid atom number(s) provided"
-        GoTo Error_Exit
+    If atomIdx1 < 1 Or atomIdx1 > Me.numOfAtoms Then
+        ' Not within range of atoms present for atom 1
+        atomDistance = "Invalid atom index #1: '" & atomIdx1 & "'"
+        Exit Property
+    ElseIf atomIdx2 < 1 Or atomIdx2 > Me.numOfAtoms Then
+        atomDistance = "Invalid atom index #2: '" & atomIdx2 & "'"
+        Exit Property
     Else
         ' Both are within range -- calculate the distance
         workDbl = 0#
-       ' idx1 = parms(val)
-       ' idx2 = parms(val + 1)
         For iter = 1 To 3
             workDbl = workDbl + ( _
-                    workVec(3 * (atomIdx1 - 1) + iter, 1) - _
-                    workVec(3 * (atomIdx2 - 1) + iter, 1) _
+                    workVec(atomIdx1, iter) - workVec(atomIdx2, iter) _
                                 ) ^ 2
         Next iter
         atomDistance = Sqr(workDbl)
     End If
     
-    ' Reset error handler; successful return
-    On Error GoTo 0
-    Exit Property
+End Property
+
+Property Get atomDisplacement( _
+            ByVal geomNum As Long, _
+            ByVal atomIdxFrom As Long, _
+            ByVal atomIdxTo As Long _
+            ) As Variant
     
-Error_Exit:
-    atomDistance = "ORCA_XYZ.atomDistance: " & atomDistance
-    On Error GoTo 0
-    Exit Property
+    ' Vector displacement between the two indicated atoms, from the
+    '  indicated geometry, as a 3x1 2-D array. Bohrs units.
     
-VBA_Error_Exit:
-    atomDistance = "ORCA_XYZ.atomDistance: VBA Error " & Err.Number & ": " & Err.Description
-    Err.Clear
-    On Error GoTo 0
-    Exit Property
+    Dim workVec As Variant, iter As Long
+    Dim outVt As Variant
+    
+    ' If a prior error, return it
+    If ErrorStr <> "" Then
+        atomDisplacement = ErrorStr
+        Exit Property
+    End If
+    
+    ' If not initialized, dump with error
+    If Not Initialized Then
+        RaiseUninitError
+    End If
+    
+    ' Retrieve the relevant geometry; passing out any error behavior
+    workVec = Me.singleGeometry(geomNum)
+    If Not IsArray(workVec) Then
+        atomDisplacement = workVec
+        Exit Property
+    End If
+    
+    ' Reshape to a more convenient form
+    workVec = mReshape(workVec, Me.numOfAtoms, 3)
+    
+    ' Confirm provided atom numbers are valid
+    If atomIdxFrom < 1 Or atomIdxFrom > Me.numOfAtoms Then
+        ' Not within range of atoms present for 'from' atom
+        atomDisplacement = "Invalid 'from' atom index: '" & atomIdxFrom & "'"
+        Exit Property
+    ElseIf atomIdxTo < 1 Or atomIdxTo > Me.numOfAtoms Then
+        atomDisplacement = "Invalid 'to' atom index: '" & atomIdxTo & "'"
+        Exit Property
+    Else
+        ' Both are within range -- calculate the displacement
+        ReDim outVt(1 To 3, 1 To 1)
+        For iter = 1 To 3
+            outVt(iter, 1) = _
+                    workVec(atomIdxTo, iter) - workVec(atomIdxFrom, iter)
+        Next iter
+        atomDisplacement = outVt
+    End If
     
 End Property
 
-
+'  ===  AUX METHODS  ===
+Private Sub RaiseUninitError()
+    Err.Raise Number:=425, Description:="Cannot use improperly " & _
+                                    "initialized ORCA_XYZ object"
+End Sub
 
 '  ===  CLASS EVENTS  ===
 Private Sub Class_Initialize()
     Initialized = False
+    ErrorStr = ""
+    
+    Set wsf = Application.WorksheetFunction
 End Sub

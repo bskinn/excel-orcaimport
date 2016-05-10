@@ -38,8 +38,8 @@ Option Base 1
 '    ' Initialize return to success; any non-orthonorm result will crash to fail
 '    mtxOrthonormCheck = vbTrue
 '
-'    ' Matrixify input if needed
-'    Matrix = matrixify(Matrix)
+'    ' arrayify input if needed
+'    Matrix = arrayify(Matrix)
 '    If IsEmpty(Matrix) Then
 '        mtxOrthonormCheck = vbUseDefault
 '        Exit Function
@@ -92,9 +92,9 @@ Option Base 1
 '        orthonormTol = DEF_Orthonorm_Tol
 '    End If
 '
-'    ' Matrixify all of the vectors, dumping out if any arguments aren't workable
+'    ' arrayify all of the vectors, dumping out if any arguments aren't workable
 '    For iter = 0 To maxVecIdx
-'        vecs(iter) = matrixify(vecs(iter))
+'        vecs(iter) = arrayify(vecs(iter))
 '        If IsEmpty(vecs(iter)) Then
 '            vecsOrthonormCheck = vbUseDefault
 '            Exit Function

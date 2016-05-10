@@ -21,6 +21,7 @@ Attribute VB_Name = "Testing"
 '-------------------------------------------------------------------------------
 
 Option Explicit
+Option Base 1
 
 Sub testish()
 
@@ -29,6 +30,16 @@ Sub testish()
     ReDim vt(0 To 5, 0 To 6, 0 To 2)
     
     Debug.Print arrRank(vt)
+    
+End Sub
+
+Sub testish2()
+
+    Dim vt As Variant
+    
+    vt = arrayify(Array(1, 2, 3, 4, 5))
+    
+    Debug.Print vt(2)
     
 End Sub
 
@@ -141,3 +152,28 @@ End Sub
 '
 '            quickHess = outVt
 
+Sub xyztest()
+
+    Dim XYZ As New ORCA_XYZ, fs As FileSystemObject
+    
+    XYZ.readXYZ "C:\ptest.trj", fs
+    
+    Debug.Print XYZ.atomDistance(1, 6, 7)
+    
+End Sub
+
+Sub errtest()
+
+    If False And (1 = "13") Then
+        MsgBox "Not OK 1"
+    Else
+        MsgBox "OK 1"
+    End If
+    
+    If (True) Or (13 = "sit") Then
+        MsgBox "Not OK 2"
+    Else
+        MsgBox "OK 2"
+    End If
+        
+End Sub

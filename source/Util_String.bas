@@ -1,20 +1,12 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "DblObj"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = False
-Attribute VB_Exposed = False
+Attribute VB_Name = "Util_String"
 '-------------------------------------------------------------------------------
-' Name:        DblObj (Class Module)
-' Purpose:     Object wrapper around a simple Double for flexible object returns
+' Name:        Util_String (Module)
+' Purpose:     String helper functions for ORCA Importer
 '
 ' Author:      Brian Skinn
 '                bskinn@alum.mit.edu
 '
-' Created:     3 May 2016
+' Created:     10 May 2016
 ' Copyright:   (c) Brian Skinn 2016
 ' License:     The MIT License; see "license.txt" for full license terms
 '                   and contributor agreement.
@@ -31,15 +23,11 @@ Attribute VB_Exposed = False
 Option Explicit
 Option Base 1
 
-Private internalDbl  As Double
+Public Function strStartsWith(ByVal str As String, ByVal subStr As String) As Boolean
+    strStartsWith = (subStr = Left(str, Len(subStr)))
+End Function
 
-Property Let DblValue(dbl As Double)
-    internalDbl = dbl
-End Property
-
-Property Get DblValue() As Double
-    DblValue = internalDbl
-End Property
-
-
+Public Function strEndsWith(ByVal str As String, ByVal subStr As String) As Boolean
+    strEndsWith = (subStr = Right(str, Len(subStr)))
+End Function
 

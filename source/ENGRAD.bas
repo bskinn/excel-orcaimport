@@ -35,7 +35,7 @@ Public Function ENGRADGradient(ByVal path As Variant) As Variant
     Dim retObj As Object
     
     ' Bind the object
-    Set retObj = mENGRAD.IMemoized_memoItem(dematrixify(path))
+    Set retObj = mENGRAD.IMemoized_memoItem(dearrayify(path))
     If TypeOf retObj Is ORCA_ENGRAD Then
         ENGRADGradient = retObj.gradientArray
     Else
@@ -54,7 +54,7 @@ Public Function ENGRADEnergy(ByVal path As Variant) As Variant
     Dim retObj As Object
     
     ' Bind the object
-    Set retObj = mENGRAD.IMemoized_memoItem(dematrixify(path))
+    Set retObj = mENGRAD.IMemoized_memoItem(dearrayify(path))
     If TypeOf retObj Is ORCA_ENGRAD Then
         ENGRADEnergy = retObj.totalEnergy
     Else
@@ -73,7 +73,7 @@ Public Function ENGRADNumAtoms(ByVal path As Variant) As Variant
     Dim retObj As Object
     
     ' Bind the object
-    Set retObj = mENGRAD.IMemoized_memoItem(dematrixify(path))
+    Set retObj = mENGRAD.IMemoized_memoItem(dearrayify(path))
     If TypeOf retObj Is ORCA_ENGRAD Then
         ENGRADNumAtoms = retObj.numOfAtoms
     Else
@@ -82,7 +82,7 @@ Public Function ENGRADNumAtoms(ByVal path As Variant) As Variant
     
 End Function
 
-Public Function ENGRADCoordsVec(ByVal path As Variant) As Variant
+Public Function ENGRADCoords(ByVal path As Variant) As Variant
     ' Retrieve memoized .engrad and return the 3Nx1 coordinates vector or
     '  string error value.
     
@@ -92,11 +92,11 @@ Public Function ENGRADCoordsVec(ByVal path As Variant) As Variant
     Dim retObj As Object
     
     ' Bind the object
-    Set retObj = mENGRAD.IMemoized_memoItem(dematrixify(path))
+    Set retObj = mENGRAD.IMemoized_memoItem(dearrayify(path))
     If TypeOf retObj Is ORCA_ENGRAD Then
-        ENGRADCoordsVec = retObj.atomCoordsArray
+        ENGRADCoords = retObj.atomCoordsArray
     Else
-        ENGRADCoordsVec = retObj.StrValue
+        ENGRADCoords = retObj.StrValue
     End If
     
 End Function
@@ -111,7 +111,7 @@ Public Function ENGRADAtomicNums(ByVal path As Variant) As Variant
     Dim retObj As Object
     
     ' Bind the object
-    Set retObj = mENGRAD.IMemoized_memoItem(dematrixify(path))
+    Set retObj = mENGRAD.IMemoized_memoItem(dearrayify(path))
     If TypeOf retObj Is ORCA_ENGRAD Then
         ENGRADAtomicNums = retObj.atomicNumsArray
     Else
@@ -130,7 +130,7 @@ Public Function ENGRADAtomicSyms(ByVal path As Variant) As Variant
     Dim retObj As Object
     
     ' Bind the object
-    Set retObj = mENGRAD.IMemoized_memoItem(dematrixify(path))
+    Set retObj = mENGRAD.IMemoized_memoItem(dearrayify(path))
     If TypeOf retObj Is ORCA_ENGRAD Then
         ENGRADAtomicSyms = retObj.atomicSymsArray
     Else
