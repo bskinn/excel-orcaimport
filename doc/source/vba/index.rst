@@ -11,5 +11,6 @@ Contents:
    :maxdepth: 1
 
    assert
+   matrix
 
 

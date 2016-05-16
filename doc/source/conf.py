@@ -31,6 +31,7 @@ import os
 # ones.
 extensions = [
     'sphinx.ext.mathjax',
+    'sphinx.ext.intersphinx',
 #    'sphinx.ext.autodoc',
 #	'sphinx.ext.napoleon'
 ]
@@ -79,7 +80,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = []
+exclude_patterns = ['_static/*']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -111,6 +112,12 @@ todo_include_todos = False
 # Suppressing selected warnings
 suppress_warnings = ['image.nonlocal_uri']
 
+# Epilog
+rst_epilog = ""
+for fname in [n for n in os.listdir('_static') if n.endswith('epilog.rst')]:
+    with open(os.path.join("_static", fname) , 'r') as f:
+        rst_epilog = rst_epilog + f.read()
+del fname, f
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -362,3 +369,9 @@ epub_exclude_files = ['search.html']
 
 # If false, no index is generated.
 #epub_use_index = True
+
+
+# Intersphinx mapping
+#intersphinx_mapping = {
+#    'xlwsf': ('https://support.office.com/en-us/', 'C:\\objects.inv')
+#    }

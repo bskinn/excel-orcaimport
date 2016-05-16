@@ -5,10 +5,17 @@ Matrix Functions
 
 *All should work when taking range references. Quirky if typing arrays explicitly into the formula.*
 
-.. function:: mTranspose(ByVal mtx As Variant) As Variant
+.. _udf-mtx-mTranspose:
 
-   Wrapper around a call to the built-in ``MTRANSPOSE`` function that raises a customized RTE 13
-   (type mismatch) if the argument is not a 2-D Array.
+.. function:: mTranspose(mtx)
+   :noindex:
+
+   |array-return|
+
+   VBA reference: :func:`mTranspose`
+
+   Returns the transpose of `mtx`. Identical behavior to the build-in |udf-TRANSPOSE|_.
+
 
 
 .. toctree::

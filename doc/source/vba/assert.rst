@@ -8,7 +8,7 @@ desirable, if time-consuming. :-/*
 
 .. function:: assertIsArray(vnt As Variant)
 
-   Wrapper around an ``IsArray()`` call that raises a customized RTE 13
+   Wrapper around an |vba-IsArray|_ call that raises a customized RTE 13
    (type mismatch) if the argument is not an Array.
 
 
