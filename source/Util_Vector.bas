@@ -1,7 +1,8 @@
 Attribute VB_Name = "Util_Vector"
 '-------------------------------------------------------------------------------
 ' Name:        Util_Vector (Module)
-' Purpose:     Helper functions for ORCA Importer taking 1-D array inputs
+' Purpose:     Helper functions for ORCA Importer taking 1-D array or
+'              Nx1/1xN 2-D array inputs
 '
 ' Author:      Brian Skinn
 '                bskinn@alum.mit.edu
@@ -262,11 +263,11 @@ Public Function vDot(ByVal vec1 As Variant, ByVal vec2 As Variant) As Variant
     
 End Function
 
-' Function vProj
+' Function vProj TODO
 
-' Function vRej
+' Function vRej TODO
 
-' Function vCross
+' Function vCross TODO
 
 Public Function vNorm(ByVal vec As Variant) As Variant
     ' Return the 2-norm of the input vector. Accepts both 1-D and
@@ -343,3 +344,80 @@ Public Function vNormalize(ByVal vec As Variant) As Variant
     End If
     
 End Function
+
+' Function vOrthoBasis TODO
+' Function vLength TODO
+' Function vAngle TODO
+
+'Public Function vecsOrthonormCheck(ParamArray vecs()) As VbTriState
+'    ' ##TODO## CONVERT TO STRING RETURN TYPE
+'    Dim maxVecIdx As Long, vecLength As Long
+'    Dim iter As Long, iter2 As Long
+'    Dim orthonormTol As Double
+'
+'    ' ParamArray is always Base 0, regardless of Option Base setting
+'    ' A single double value can be passed as the last argument to adjust
+'    '  the orthonormality tolerance. Otherwise, the default value is used.
+'
+'    ' No-good return if no argument passed
+'    If IsMissing(vecs) Then
+'        vecsOrthonormCheck = vbUseDefault
+'        Exit Function
+'    End If
+'
+'    ' Store the index of the last element in the vector array
+'    maxVecIdx = UBound(vecs)
+'
+'    ' Check if the last element is a non-array single value. If so, treat as the tolerance
+'    '  and decrement the max vector index (crashing out if this leaves no vectors).
+'    '  Otherwise, set the default tolerance.
+'    If IsNumeric(vecs(maxVecIdx)) Then
+'        orthonormTol = CDbl(vecs(maxVecIdx))
+'        If maxVecIdx > 0 Then
+'            maxVecIdx = maxVecIdx - 1
+'        Else
+'            vecsOrthonormCheck = vbUseDefault
+'            Exit Function
+'        End If
+'    Else
+'        orthonormTol = DEF_Orthonorm_Tol
+'    End If
+'
+'    ' arrayify all of the vectors, dumping out if any arguments aren't workable
+'    For iter = 0 To maxVecIdx
+'        vecs(iter) = arrayify(vecs(iter))
+'        If IsEmpty(vecs(iter)) Then
+'            vecsOrthonormCheck = vbUseDefault
+'            Exit Function
+'        End If
+'    Next iter
+'
+'    ' Store the length of the first vector
+'    vecLength = UBound(vecs(0), 1)
+'
+'    ' Check to ensure all vectors are this length, crashing out if not
+'    For iter = 0 To maxVecIdx
+'        If UBound(vecs(iter), 1) <> vecLength Then
+'            vecsOrthonormCheck = vbUseDefault
+'            Exit Function
+'        End If
+'    Next iter
+'
+'    ' Initialize the success return
+'    vecsOrthonormCheck = vbTrue
+'
+'    ' Loop through the vectors, confirming orthonormality.
+'    ' If any fail, set the fail return and dump from function.
+'    For iter = 0 To maxVecIdx
+'        For iter2 = iter To maxVecIdx
+'            If (Abs(ProdScal(vecs(iter), vecs(iter2))) - deltaFxn(iter, iter2)) _
+'                    > CDbl(orthonormTol) Then
+'                vecsOrthonormCheck = vbFalse
+'                Exit Function
+'            End If
+'        Next iter2
+'    Next iter
+'
+'End Function
+
+
