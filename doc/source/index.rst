@@ -3,20 +3,26 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to ORCA Importer's documentation!
-=========================================
+Welcome to ORCA Importer!
+=========================
+
+*Some text will go here*
 
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
+   requirements
+   install
+   userguide
 
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+
+.. * :ref:`modindex`
+.. * :ref:`search`
 

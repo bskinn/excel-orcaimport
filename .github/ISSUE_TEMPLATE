@@ -1,1 +1,12 @@
-*This will eventually be a more useful issue template*
+When submitting bug reports, please:
+
+ * Provide a description of what you were trying to do, and what happened instead
+ * Indicate the functions that are misbehaving
+ * Specify whether you were using the functions in a worksheet or in VBA code
+
+For worksheet function misbehavior, please copy in the formula you were trying to use,
+or attach a minimal Excel sheet that demonstrates the problem.
+
+For VBA code, if possible please copy in the misbehaving piece of your source and
+indicate the number and description of any run-time error that's thrown.
+
