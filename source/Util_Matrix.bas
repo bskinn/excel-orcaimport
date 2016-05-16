@@ -429,3 +429,55 @@ Public Function mTranspose(ByVal mtx As Variant) As Variant
     
 End Function
 
+' Function mTrace TODO
+' Function mGetDiag TODO
+' Function mExciseRow TODO
+' Function mExciseCol TODO
+' Function mDet TODO
+' Function mDims TODO --> Vector
+' Function mRows TODO --> Long
+' Function mCols TODO --> Long
+' Function mAdd TODO
+' Function mSubtract TODO
+' Function mMultiply TODO
+' Function mDivide TODO
+' Function mRaise TODO
+' Function mPlusVal TODO
+' Function mTimesVal TODO
+' Function mPowerVal TODO
+
+'Public Function mtxOrthonormCheck(ByVal Matrix As Variant, _
+'        Optional ByVal orthonormTol As Double = DEF_Orthonorm_Tol) As VbTriState
+'    ' ##TODO## Convert to string return type!
+'
+'    ' Columnwise check for orthonormality of a matrix
+'    ' Matrix does not have to be square
+'    ' Function assumes that both dimensions of 'matrix' are Base 1
+'    ' vbUseDefault return indicates invalid 'matrix' argument passed
+'
+'    Dim iter As Long, iter2 As Long
+'    Dim vecs As Variant
+'
+'    ' Initialize return to success; any non-orthonorm result will crash to fail
+'    mtxOrthonormCheck = vbTrue
+'
+'    ' arrayify input if needed
+'    Matrix = arrayify(Matrix)
+'    If IsEmpty(Matrix) Then
+'        mtxOrthonormCheck = vbUseDefault
+'        Exit Function
+'    End If
+'
+'    ' Perform check
+'    For iter = 1 To UBound(Matrix, 2)
+'        For iter2 = iter To UBound(Matrix, 2)
+'            If Abs(ProdScal(MCol(Matrix, iter), MCol(Matrix, iter2))) - _
+'                    CDbl(deltaFxn(iter, iter2)) > orthonormTol Then
+'                mtxOrthonormCheck = vbFalse
+'                Exit Function
+'            End If
+'        Next iter2
+'    Next iter
+'
+'End Function
+
