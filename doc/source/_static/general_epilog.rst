@@ -5,3 +5,6 @@
 
 .. |long-return| replace:: *Integer return value*
 
+.. |br| raw:: html
+
+    <br />

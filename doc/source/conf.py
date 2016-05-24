@@ -372,6 +372,7 @@ epub_exclude_files = ['search.html']
 
 
 # Intersphinx mapping
-#intersphinx_mapping = {
-#    'xlwsf': ('https://support.office.com/en-us/', 'C:\\objects.inv')
-#    }
+intersphinx_mapping = {
+    'xlwsf': ('https://support.office.com/en-us/',
+              'https://raw.githubusercontent.com/bskinn/intersphinx-xlwsf/master/objects.inv')
+    }

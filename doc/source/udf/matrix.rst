@@ -14,7 +14,7 @@ Matrix Functions
 
    VBA reference: :func:`mTranspose`
 
-   Returns the transpose of `mtx`. Identical behavior to the build-in |udf-TRANSPOSE|_.
+   Returns the transpose of `mtx`. Identical behavior to the build-in :func:`TRANSPOSE`.
 
 
 
